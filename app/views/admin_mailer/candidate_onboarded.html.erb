@@ -1,0 +1,10 @@
+<h1>New Candidate Onboarded</h1>
+<p>A new candidate has completed the onboarding process:</p>
+<ul>
+  <li><strong>Name:</strong> <%= @profile.first_name %> <%= @profile.last_name %></li>
+  <li><strong>Email:</strong> <%= @profile.email %></li>
+  <li><strong>Phone:</strong> <%= @profile.phone_number %></li>
+  <li><strong>City:</strong> <%= @profile.city %></li>
+  <li><strong>Job Function:</strong> <%= @profile.job_function&.dig(:name) %></li>
+</ul>
+<p><%= link_to "View Candidate Profile", admin_candidate_url(@profile) %></p>

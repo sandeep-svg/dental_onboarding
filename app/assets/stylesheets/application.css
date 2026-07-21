@@ -1,0 +1,23 @@
+input:not([type="checkbox"]):not([type="radio"]).field_with_errors,
+select.field_with_errors,
+textarea.field_with_errors,
+.field_with_errors input:not([type="checkbox"]):not([type="radio"]),
+.field_with_errors select,
+.field_with_errors textarea,
+[aria-invalid="true"]:not([type="checkbox"]):not([type="radio"]) {
+  border-color: #ef4444 !important;
+  outline: 1px solid #ef4444 !important;
+}
+
+.field_with_errors > label,
+label:has(+ [aria-invalid="true"]),
+label:has(~ [aria-invalid="true"]),
+label:has([aria-invalid="true"]) {
+  color: #dc2626 !important;
+}
+
+.has-error > .section-label,
+.has-error > label.section-label,
+.field_with_errors > label {
+  color: #dc2626 !important;
+}

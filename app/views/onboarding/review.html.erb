@@ -1,0 +1,446 @@
+<% content_for :head do %>
+  <meta name="turbo-cache-control" content="no-cache">
+
+<% end %>
+
+<div class="max-w-4xl mx-auto">
+  <h1 class="text-2xl font-semibold text-gray-900 mb-6">Review your profile</h1>
+
+  <% if @profile.errors.any? %>
+    <div class="bg-red-100 border border-red-200 text-red-700 rounded-md px-4 py-3 mb-6">
+      <ul class="list-disc list-inside text-sm">
+        <% @profile.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <% if @document && @document.parsing_status.in?(%w[pending processing]) %>
+    <div class="bg-blue-100 border border-blue-200 text-blue-700 rounded-md px-4 py-3 mb-6 text-sm" data-controller="parsing-poll" data-parsing-poll-url-value="<%= onboarding_parsing_status_path %>">
+      Your CV is still being processed. Some fields will be filled in automatically once processing completes. This page will refresh automatically.
+    </div>
+  <% elsif @document && @document.parsing_status == "failed" %>
+    <div class="bg-red-100 border border-red-200 text-red-700 rounded-md px-4 py-3 mb-6 text-sm">
+      <span>CV parsing failed.</span>
+      <%= button_to "Retry parsing", onboarding_retry_parsing_path, method: :post, class: "ml-2 underline inline text-red-700 hover:text-red-900 bg-transparent border-none cursor-pointer" %>
+    </div>
+  <% end %>
+
+  <%= form_with model: @profile, url: onboarding_review_path, method: :patch, data: { controller: "conditional-form skills clear-errors" }, class: "space-y-8" do |f| %>
+
+    <%# Section 1: Personal Details %>
+    <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Personal Details</h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <%= f.label :first_name, "First name <span class=\"text-red-500\">*</span>".html_safe, class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_field :first_name, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          <%= field_status_label(@profile, :first_name) %><%= field_uncertain_label(@profile, :first_name) %>
+        </div>
+        <div>
+          <%= f.label :last_name, "Last name <span class=\"text-red-500\">*</span>".html_safe, class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_field :last_name, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          <%= field_status_label(@profile, :last_name) %><%= field_uncertain_label(@profile, :last_name) %>
+        </div>
+        <div>
+          <%= f.label :email, "Email <span class=\"text-red-500\">*</span>".html_safe, class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.email_field :email, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          <%= field_status_label(@profile, :email) %><%= field_uncertain_label(@profile, :email) %>
+        </div>
+        <div>
+          <%= f.label :phone_number, "Phone number <span class=\"text-red-500\">*</span>".html_safe, class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.telephone_field :phone_number, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          <%= field_status_label(@profile, :phone_number) %><%= field_uncertain_label(@profile, :phone_number) %>
+        </div>
+        <div>
+          <%= f.label :city, "City <span class=\"text-red-500\">*</span>".html_safe, class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_field :city, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          <%= field_status_label(@profile, :city) %><%= field_uncertain_label(@profile, :city) %>
+        </div>
+        <div>
+          <%= f.label :country, class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_field :country, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          <%= field_status_label(@profile, :country) %><%= field_uncertain_label(@profile, :country) %>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Languages</label>
+        <div class="space-y-2">
+          <% Language.all.each do |lang| %>
+            <% existing = @profile.candidate_languages.find { |cl| cl.language_id == lang.id } %>
+            <div class="flex items-center gap-3">
+              <label class="flex items-center gap-2 text-sm text-gray-700 min-w-[120px]">
+                <%= check_box_tag "candidate_profile[languages][#{lang.id}][selected]", "1", existing.present?, class: "rounded border-gray-300 text-blue-600 focus:ring-blue-500" %>
+                <%= lang.name %>
+              </label>
+              <%= select_tag "candidate_profile[languages][#{lang.id}][level]",
+                options_for_select([["", ""], ["A1","A1"], ["A2","A2"], ["B1","B1"], ["B2","B2"], ["C1","C1"], ["C2","C2"], ["Native","native"], ["Fluent","fluent"]], existing&.level),
+                class: "rounded-md border border-gray-300 px-2 py-1 text-sm" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <%# Section 2: Job Preferences %>
+    <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Job Preferences</h2>
+
+      <div class="space-y-4">
+        <div>
+          <%= f.label :desired_job_function_id, "Desired job function <span class=\"text-red-500\">*</span>".html_safe, class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.select :desired_job_function_id, options_for_select(CandidateProfile.job_functions.map { |jf| [jf[:name], jf[:id]] }, @profile.desired_job_function_id), { include_blank: "Select..." }, { data: { action: "change->conditional-form#updateForm" }, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+        </div>
+
+        <div class="<%= has_error_class(@profile, :preferred_regions) %>">
+          <label class="block text-sm font-medium text-gray-700 mb-2 section-label">Preferred regions <span class="text-red-500">*</span></label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 checkbox-group">
+            <% CandidateProfile.regions.each do |region| %>
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <%= check_box_tag "candidate_profile[preferred_regions][]", region, @profile.preferred_regions_list.include?(region), class: "rounded border-gray-300 text-blue-600 focus:ring-blue-500" %>
+                <%= region.humanize %>
+              </label>
+            <% end %>
+            <%= hidden_field_tag "candidate_profile[preferred_regions][]", "" %>
+          </div>
+        </div>
+
+        <div>
+          <%= f.label :max_travel_time, "Max travel time (minutes)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.number_field :max_travel_time, min: 0, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Transport type</label>
+          <div class="flex flex-wrap gap-4">
+            <% CandidateProfile::TRANSPORT_OPTIONS.each do |opt| %>
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <%= check_box_tag "candidate_profile[transport_type][]", opt, @profile.transport_type&.include?(opt), class: "rounded border-gray-300 text-blue-600 focus:ring-blue-500" %>
+                <%= opt.humanize %>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <div>
+          <%= f.label :search_status, class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.select :search_status, options_for_select(CandidateProfile::SEARCH_STATUSES.map { |s| [s.humanize, s] }, @profile.search_status), { include_blank: "Select..." }, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        </div>
+
+        <div>
+          <%= f.label :reason_for_looking, "Reason for looking", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_area :reason_for_looking, rows: 3, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        </div>
+      </div>
+    </div>
+
+    <%# Section 3: Employment & Compensation %>
+    <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Employment & Compensation</h2>
+
+      <div class="space-y-4">
+        <div class="<%= has_error_class(@profile, :desired_employment_type) %>">
+          <label class="block text-sm font-medium text-gray-700 mb-2 section-label">Desired employment type <span class="text-red-500">*</span></label>
+          <div class="flex flex-wrap gap-4 checkbox-group">
+            <% CandidateProfile::EMPLOYMENT_TYPES.each do |et| %>
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <%= check_box_tag "candidate_profile[desired_employment_type][]", et, @profile.employment_types_list.include?(et), class: "rounded border-gray-300 text-blue-600 focus:ring-blue-500", data: { action: "change->conditional-form#updateEmployment" } %>
+                <%= et.humanize %>
+              </label>
+            <% end %>
+            <%= hidden_field_tag "candidate_profile[desired_employment_type][]", "" %>
+          </div>
+        </div>
+
+        <div data-conditional-form-target="salaryField" class="hidden">
+          <%= f.label :desired_gross_salary, "Desired gross salary (EUR)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.number_field :desired_gross_salary, min: 0, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        </div>
+
+        <div data-conditional-form-target="percentageField" class="hidden">
+          <%= f.label :desired_percentage, "Desired percentage (%)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.number_field :desired_percentage, min: 0, max: 100, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        </div>
+
+        <div data-conditional-form-target="dailyRevenueField" class="hidden">
+          <%= f.label :average_daily_revenue, "Average daily revenue (EUR)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.number_field :average_daily_revenue, min: 0, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        </div>
+
+        <div data-conditional-form-target="bigRegistrationField" class="hidden">
+          <%= f.label :big_registration_status, "BIG registration status", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.select :big_registration_status, options_for_select(CandidateProfile::BIG_REGISTRATION_STATUSES.map { |s| [s.humanize, s] }, @profile.big_registration_status), { include_blank: "Select..." }, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        </div>
+
+        <div data-conditional-form-target="bigNumberField" class="hidden">
+          <%= f.label :big_number, "BIG number", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_field :big_number, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        </div>
+
+        <div>
+          <%= f.label :years_of_experience, "Years of experience", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.number_field :years_of_experience, min: 0, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        </div>
+      </div>
+    </div>
+
+    <%# Section 4: Education %>
+    <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Education</h2>
+
+      <div data-controller="nested-form">
+        <template data-nested-form-target="template">
+          <%= f.fields_for :educations, Education.new, child_index: "NEW_RECORD" do |ef| %>
+            <div class="border border-gray-200 rounded-md p-4 mb-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <%= ef.label :institution, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= ef.text_field :institution, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= ef.label :study, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= ef.text_field :study, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= ef.label :city_country, "City / Country", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= ef.text_field :city_country, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= ef.label :level, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= ef.select :level, options_for_select(CandidateProfile::EDUCATION_LEVELS.map { |l| [l.humanize, l] }), { include_blank: "Select..." }, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= ef.label :start_date, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= ef.date_field :start_date, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= ef.label :end_date, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= ef.date_field :end_date, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+              </div>
+              <div class="mt-2">
+                <button type="button" data-action="nested-form#removeRecord" class="text-sm text-red-600 hover:text-red-800 underline">
+                  Remove
+                </button>
+              </div>
+            </div>
+          <% end %>
+        </template>
+
+        <div data-nested-form-target="fields">
+          <%= f.fields_for :educations do |ef| %>
+            <div class="border border-gray-200 rounded-md p-4 mb-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <%= ef.label :institution, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= ef.text_field :institution, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= ef.label :study, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= ef.text_field :study, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= ef.label :city_country, "City / Country", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= ef.text_field :city_country, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= ef.label :level, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= ef.select :level, options_for_select(CandidateProfile::EDUCATION_LEVELS.map { |l| [l.humanize, l] }), { include_blank: "Select..." }, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= ef.label :start_date, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= ef.date_field :start_date, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= ef.label :end_date, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= ef.date_field :end_date, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+              </div>
+              <div class="mt-2">
+                <%= ef.hidden_field :_destroy, value: "0" %>
+                <button type="button" data-action="nested-form#removeRecord" class="text-sm text-red-600 hover:text-red-800 underline">
+                  Remove
+                </button>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <button type="button" data-action="nested-form#addRecord" class="mt-2 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          Add Education
+        </button>
+      </div>
+    </div>
+
+    <%# Section 5: Work Experience %>
+    <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Work Experience</h2>
+
+      <div data-controller="nested-form">
+        <template data-nested-form-target="template">
+          <%= f.fields_for :work_experiences, WorkExperience.new, child_index: "NEW_RECORD" do |wf| %>
+            <div class="border border-gray-200 rounded-md p-4 mb-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <%= wf.label :job_title, "Job title", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= wf.text_field :job_title, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= wf.label :company_name, "Company name", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= wf.text_field :company_name, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div class="sm:col-span-2">
+                  <%= wf.label :responsibilities, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= wf.text_area :responsibilities, rows: 3, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= wf.label :start_date, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= wf.date_field :start_date, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= wf.label :end_date, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= wf.date_field :end_date, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+              </div>
+              <div class="mt-2 flex items-center gap-4">
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                  <%= wf.check_box :current_job, class: "rounded border-gray-300 text-blue-600 focus:ring-blue-500" %>
+                  Current job
+                </label>
+                <button type="button" data-action="nested-form#removeRecord" class="text-sm text-red-600 hover:text-red-800 underline">
+                  Remove
+                </button>
+              </div>
+            </div>
+          <% end %>
+        </template>
+
+        <div data-nested-form-target="fields">
+          <%= f.fields_for :work_experiences do |wf| %>
+            <div class="border border-gray-200 rounded-md p-4 mb-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <%= wf.label :job_title, "Job title", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= wf.text_field :job_title, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= wf.label :company_name, "Company name", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= wf.text_field :company_name, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div class="sm:col-span-2">
+                  <%= wf.label :responsibilities, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= wf.text_area :responsibilities, rows: 3, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= wf.label :start_date, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= wf.date_field :start_date, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+                <div>
+                  <%= wf.label :end_date, class: "block text-sm font-medium text-gray-700 mb-1" %>
+                  <%= wf.date_field :end_date, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                </div>
+              </div>
+              <div class="mt-2 flex items-center gap-4">
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                  <%= wf.check_box :current_job, class: "rounded border-gray-300 text-blue-600 focus:ring-blue-500" %>
+                  Current job
+                </label>
+                <%= wf.hidden_field :_destroy, value: "0" %>
+                <button type="button" data-action="nested-form#removeRecord" class="text-sm text-red-600 hover:text-red-800 underline">
+                  Remove
+                </button>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <button type="button" data-action="nested-form#addRecord" class="mt-2 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          Add Work Experience
+        </button>
+      </div>
+    </div>
+
+    <%# Section 6: Skills %>
+    <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Skills</h2>
+
+      <% selected_skill_ids = @profile.candidate_skills.pluck(:skill_id) %>
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" data-skills-target="checkboxes">
+        <% Skill.all.each do |skill| %>
+          <label class="flex items-center gap-2 text-sm text-gray-700" data-skill-group="<%= skill.group_name %>">
+            <%= check_box_tag "candidate_profile[skill_ids][]", skill.id, selected_skill_ids.include?(skill.id), class: "rounded border-gray-300 text-blue-600 focus:ring-blue-500" %>
+            <%= skill.name.humanize %>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Section 7: Availability %>
+    <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Availability</h2>
+
+      <div class="space-y-4">
+        <div class="<%= has_error_class(@profile, :available_working_days) %>">
+          <label class="block text-sm font-medium text-gray-700 mb-2 section-label">Available working days <span class="text-red-500">*</span></label>
+          <div class="flex flex-wrap gap-4 checkbox-group">
+            <% CandidateProfile::WORKING_DAYS.each do |day| %>
+              <label class="flex items-center gap-2 text-sm text-gray-700">
+                <%= check_box_tag "candidate_profile[available_working_days][]", day, @profile.working_days_list.include?(day), class: "rounded border-gray-300 text-blue-600 focus:ring-blue-500" %>
+                <%= day.humanize %>
+              </label>
+            <% end %>
+            <%= hidden_field_tag "candidate_profile[available_working_days][]", "" %>
+          </div>
+        </div>
+
+        <div>
+          <%= f.label :available_from, "Available from", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.date_field :available_from, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        </div>
+
+        <div>
+          <%= f.label :notice_period, "Notice period", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_field :notice_period, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        </div>
+      </div>
+    </div>
+
+    <%# Section 8: Additional Information %>
+    <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Additional Information</h2>
+
+      <div class="space-y-4">
+        <div>
+          <%= f.label :motivation, class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_area :motivation, rows: 4, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        </div>
+
+        <div>
+          <%= f.label :internal_notes, "Internal notes", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_area :internal_notes, rows: 4, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        </div>
+
+        <div>
+          <%= f.label :professional_summary, "Professional summary", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <%= f.text_area :professional_summary, rows: 4, class: "block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          <%= field_status_label(@profile, :professional_summary) %><%= field_uncertain_label(@profile, :professional_summary) %>
+        </div>
+      </div>
+    </div>
+
+    <%# Consent %>
+    <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
+      <label class="flex items-start gap-3">
+        <%= f.check_box :consent_accepted, class: "mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500" %>
+        <span class="text-sm text-gray-700">I agree that my CV and profile information may be processed to create and improve my candidate profile. <span class="text-red-500">*</span></span>
+      </label>
+    </div>
+
+    <div class="flex justify-end">
+      <%= f.submit "Save Profile", class: "inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer" %>
+    </div>
+  <% end %>
+</div>

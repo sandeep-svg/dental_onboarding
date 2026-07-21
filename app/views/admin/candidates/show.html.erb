@@ -1,0 +1,141 @@
+<div class="max-w-4xl mx-auto">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-semibold text-gray-900"><%= @profile.first_name %> <%= @profile.last_name %></h1>
+    <%= link_to "Back to candidates", admin_candidates_path, class: "text-sm text-blue-600 hover:text-blue-800 underline" %>
+  </div>
+
+  <% if @document&.file&.attached? %>
+    <div class="mb-6">
+      <%= link_to "Download CV", rails_blob_path(@document.file, disposition: "attachment"), class: "inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+    </div>
+  <% end %>
+
+  <%# Personal Details %>
+  <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Personal Details</h2>
+    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div><dt class="text-sm text-gray-500">First name</dt><dd class="text-sm text-gray-900"><%= @profile.first_name %></dd></div>
+      <div><dt class="text-sm text-gray-500">Last name</dt><dd class="text-sm text-gray-900"><%= @profile.last_name %></dd></div>
+      <div><dt class="text-sm text-gray-500">Email</dt><dd class="text-sm text-gray-900"><%= @profile.email %></dd></div>
+      <div><dt class="text-sm text-gray-500">Phone</dt><dd class="text-sm text-gray-900"><%= @profile.phone_number %></dd></div>
+      <div><dt class="text-sm text-gray-500">City</dt><dd class="text-sm text-gray-900"><%= @profile.city %></dd></div>
+      <div><dt class="text-sm text-gray-500">Country</dt><dd class="text-sm text-gray-900"><%= @profile.country %></dd></div>
+    </dl>
+
+    <% if @profile.candidate_languages.any? %>
+      <div class="mt-4">
+        <dt class="text-sm text-gray-500 mb-1">Languages</dt>
+        <% @profile.candidate_languages.includes(:language).each do |cl| %>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2 mb-1">
+            <%= cl.language.name %> (<%= cl.level %>)
+          </span>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Job Preferences %>
+  <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Job Preferences</h2>
+    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div><dt class="text-sm text-gray-500">Job function</dt><dd class="text-sm text-gray-900"><%= @profile.job_function&.dig(:name) %></dd></div>
+      <div><dt class="text-sm text-gray-500">Preferred regions</dt><dd class="text-sm text-gray-900"><%= @profile.preferred_regions_list.join(", ") %></dd></div>
+      <div><dt class="text-sm text-gray-500">Max travel time</dt><dd class="text-sm text-gray-900"><%= @profile.max_travel_time %> min</dd></div>
+      <div><dt class="text-sm text-gray-500">Transport type</dt><dd class="text-sm text-gray-900"><%= @profile.transport_types_list.join(", ") %></dd></div>
+      <div><dt class="text-sm text-gray-500">Search status</dt><dd class="text-sm text-gray-900"><%= @profile.search_status&.humanize %></dd></div>
+      <div><dt class="text-sm text-gray-500">Reason for looking</dt><dd class="text-sm text-gray-900"><%= @profile.reason_for_looking %></dd></div>
+    </dl>
+  </div>
+
+  <%# Employment & Compensation %>
+  <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Employment & Compensation</h2>
+    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div><dt class="text-sm text-gray-500">Employment type</dt><dd class="text-sm text-gray-900"><%= @profile.employment_types_list.join(", ") %></dd></div>
+      <div><dt class="text-sm text-gray-500">Desired gross salary</dt><dd class="text-sm text-gray-900"><%= number_to_currency(@profile.desired_gross_salary, unit: "€") %></dd></div>
+      <div><dt class="text-sm text-gray-500">Desired percentage</dt><dd class="text-sm text-gray-900"><%= @profile.desired_percentage %>%</dd></div>
+      <div><dt class="text-sm text-gray-500">Avg daily revenue</dt><dd class="text-sm text-gray-900"><%= number_to_currency(@profile.average_daily_revenue, unit: "€") %></dd></div>
+      <div><dt class="text-sm text-gray-500">BIG registration</dt><dd class="text-sm text-gray-900"><%= @profile.big_registration_status&.humanize %></dd></div>
+      <div><dt class="text-sm text-gray-500">BIG number</dt><dd class="text-sm text-gray-900"><%= @profile.big_number %></dd></div>
+      <div><dt class="text-sm text-gray-500">Years of experience</dt><dd class="text-sm text-gray-900"><%= @profile.years_of_experience %></dd></div>
+    </dl>
+  </div>
+
+  <%# Education %>
+  <% if @profile.educations.any? %>
+    <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Education</h2>
+      <% @profile.educations.each do |edu| %>
+        <div class="border-l-2 border-blue-200 pl-4 mb-3">
+          <p class="text-sm font-medium text-gray-900"><%= edu.study %> <%= "- #{edu.institution}" if edu.institution.present? %></p>
+          <p class="text-xs text-gray-500"><%= edu.level&.humanize %><%= " - #{edu.city_country}" if edu.city_country.present? %></p>
+          <% if edu.start_date || edu.end_date %>
+            <p class="text-xs text-gray-400"><%= edu.start_date %> - <%= edu.end_date %></p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# Work Experience %>
+  <% if @profile.work_experiences.any? %>
+    <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Work Experience</h2>
+      <% @profile.work_experiences.each do |we| %>
+        <div class="border-l-2 border-green-200 pl-4 mb-3">
+          <p class="text-sm font-medium text-gray-900"><%= we.job_title %> <%= "- #{we.company_name}" %></p>
+          <% if we.responsibilities.present? %>
+            <p class="text-xs text-gray-600 mt-1"><%= we.responsibilities %></p>
+          <% end %>
+          <% if we.start_date || we.end_date %>
+            <p class="text-xs text-gray-400 mt-1"><%= we.start_date %> - <%= we.current_job? ? "Present" : we.end_date %></p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# Skills %>
+  <% if @profile.skills.any? %>
+    <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Skills</h2>
+      <div class="flex flex-wrap gap-2">
+        <% @profile.skills.each do |skill| %>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><%= skill.name %></span>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if @profile.suggested_skills.present? %>
+    <div class="bg-white shadow-sm border border-amber-200 rounded-lg p-6 mb-6">
+      <h2 class="text-lg font-medium text-amber-800 mb-1">Suggested Skills (from CV, not in master list)</h2>
+      <p class="text-xs text-amber-600 mb-3">These skills were found in the CV but don't match any existing skill record. Review and add them to the master list if needed.</p>
+      <div class="flex flex-wrap gap-2">
+        <% @profile.suggested_skills.split(",").each do |skill| %>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800"><%= skill.strip.humanize %></span>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%# Availability %>
+  <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Availability</h2>
+    <dl class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div><dt class="text-sm text-gray-500">Available days</dt><dd class="text-sm text-gray-900"><%= @profile.working_days_list.map(&:humanize).join(", ") %></dd></div>
+      <div><dt class="text-sm text-gray-500">Available from</dt><dd class="text-sm text-gray-900"><%= @profile.available_from %></dd></div>
+      <div><dt class="text-sm text-gray-500">Notice period</dt><dd class="text-sm text-gray-900"><%= @profile.notice_period %></dd></div>
+    </dl>
+  </div>
+
+  <%# Additional Info %>
+  <div class="bg-white shadow-sm border border-gray-200 rounded-lg p-6 mb-6">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">Additional Information</h2>
+    <dl class="space-y-4">
+      <% if @profile.motivation.present? %><div><dt class="text-sm text-gray-500">Motivation</dt><dd class="text-sm text-gray-900 mt-1"><%= @profile.motivation %></dd></div><% end %>
+      <% if @profile.internal_notes.present? %><div><dt class="text-sm text-gray-500">Internal notes</dt><dd class="text-sm text-gray-900 mt-1"><%= @profile.internal_notes %></dd></div><% end %>
+      <% if @profile.professional_summary.present? %><div><dt class="text-sm text-gray-500">Professional summary</dt><dd class="text-sm text-gray-900 mt-1"><%= @profile.professional_summary %></dd></div><% end %>
+    </dl>
+  </div>
+</div>
