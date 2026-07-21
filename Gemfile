@@ -16,7 +16,7 @@ gem "devise"
 gem "tailwindcss-rails", "~> 4.6"
 gem "pdf-reader", "~> 2.12"
 gem "docx", "~> 0.9"
-gem "pagy", "~> 9.0"
+gem "pagy", "~> 43.6"
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
