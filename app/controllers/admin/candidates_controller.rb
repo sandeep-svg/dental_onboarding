@@ -3,7 +3,7 @@ class Admin::CandidatesController < ApplicationController
   before_action :require_admin
 
   def index
-    @candidates = CandidateProfile.includes(:user).order(created_at: :desc)
+    @pagy, @candidates = pagy(CandidateProfile.includes(:user).order(created_at: :desc), items: 25)
   end
 
   def show
