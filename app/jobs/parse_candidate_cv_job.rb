@@ -62,12 +62,12 @@ class ParseCandidateCvJob < ApplicationJob
       end
     end
 
-    # Create work experience records
     if result[:work_experience].present?
       result[:work_experience].each do |we|
+        next if we[:job_title].blank? && we[:company_name].blank?
         profile.work_experiences.find_or_create_by(
-          job_title: we[:job_title],
-          company_name: we[:company_name]
+          job_title: we[:job_title].presence || "Unknown Position",
+          company_name: we[:company_name].presence || "Unknown Company"
         ) do |w|
           w.responsibilities = we[:responsibilities] if we[:responsibilities]
           w.start_date = we[:start_date] if we[:start_date]

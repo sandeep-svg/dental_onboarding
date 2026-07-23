@@ -112,7 +112,7 @@
       <h2 class="text-lg font-medium text-amber-800 mb-1">Suggested Skills (from CV, not in master list)</h2>
       <p class="text-xs text-amber-600 mb-3">These skills were found in the CV but don't match any existing skill record. Review and add them to the master list if needed.</p>
       <div class="flex flex-wrap gap-2">
-        <% @profile.suggested_skills.split(",").each do |skill| %>
+        <% @profile.suggested_skills_list.each do |skill| %>
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800"><%= skill.strip.humanize %></span>
         <% end %>
       </div>

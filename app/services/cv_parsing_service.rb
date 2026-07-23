@@ -38,8 +38,6 @@ class CvParsingService
       extract_pdf_text
     when "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       extract_docx_text
-    else
-      nil
     end
   end
 

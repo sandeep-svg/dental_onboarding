@@ -40,11 +40,7 @@ export default class extends Controller {
   }
 
   setFile(file) {
-    const validTypes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    ]
+    const validTypes = (this.element.dataset.allowedTypes || "application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document").split(",")
 
     if (!validTypes.includes(file.type)) {
       this.fileInfoTarget.textContent = "Unsupported file type. Please upload a PDF, DOC, or DOCX file."

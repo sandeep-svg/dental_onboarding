@@ -106,6 +106,11 @@ class CandidateProfile < ApplicationRecord
     transport_type.split(",").map(&:strip)
   end
 
+  def suggested_skills_list
+    return [] if suggested_skills.blank?
+    suggested_skills.split(",").map(&:strip)
+  end
+
   def sync_skills(skill_ids)
     return if skill_ids.blank?
     selected = skill_ids.map(&:to_i)

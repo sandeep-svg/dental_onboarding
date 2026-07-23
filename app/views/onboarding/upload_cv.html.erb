@@ -6,7 +6,7 @@
     <div class="bg-red-100 border border-red-200 text-red-700 rounded-md px-4 py-3 mb-6 text-sm"><%= flash[:alert] %></div>
   <% end %>
 
-  <div data-controller="cv-upload" data-max-cv-size-mb="<%= ENV.fetch('MAX_CV_SIZE_MB', 25) %>">
+  <div data-controller="cv-upload" data-max-cv-size-mb="<%= ENV.fetch('MAX_CV_SIZE_MB', 25) %>" data-allowed-types="<%= CandidateDocument::ALLOWED_CONTENT_TYPES.join(',') %>">
     <%= form_with url: onboarding_upload_cv_path, method: :post, local: true, multipart: true do |form| %>
       <%= form.file_field :file, accept: ".pdf,.doc,.docx", class: "hidden", data: { cv_upload_target: "input" } %>
 
@@ -17,7 +17,7 @@
           </svg>
         </div>
         <p class="text-sm text-gray-600">Drag & drop your CV here, or click to browse</p>
-        <p class="text-xs text-gray-400 mt-1">Supported: PDF, DOC, DOCX (max 25 MB)</p>
+        <p class="text-xs text-gray-400 mt-1">Supported: PDF, DOC, DOCX (max <%= ENV.fetch("MAX_CV_SIZE_MB", 25) %> MB)</p>
       </div>
 
       <p data-cv-upload-target="fileInfo" class="text-sm mt-2"></p>

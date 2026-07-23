@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 class OnboardingController < ApplicationController
-  before_action :authenticate_user!
   before_action :ensure_candidate_profile, only: [:review, :save_profile]
   before_action :redirect_if_completed, only: [:upload_cv]
 
@@ -67,7 +66,7 @@ class OnboardingController < ApplicationController
     if @profile.save(context: :final_save)
       @profile.sync_skills(params[:candidate_profile][:skill_ids])
       @profile.sync_languages(params[:candidate_profile][:languages])
-      @profile.update(onboarding_completed: true, parsing_status: "completed")
+      @profile.update(onboarding_completed: true)
       AdminNotificationJob.perform_later(@profile.id) unless was_completed
       redirect_to authenticated_root_path, notice: "Profile saved successfully!"
     else
@@ -117,7 +116,7 @@ class OnboardingController < ApplicationController
       :desired_gross_salary, :desired_percentage,
       :average_daily_revenue, :big_registration_status, :big_number,
       :years_of_experience, :available_from,
-      :notice_period, :motivation, :internal_notes, :professional_summary,
+      :notice_period, :motivation, :professional_summary,
       :consent_accepted,
       preferred_regions: [],
       desired_employment_type: [],

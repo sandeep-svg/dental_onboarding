@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 class Admin::CandidatesController < ApplicationController
-  before_action :authenticate_user!
   before_action :require_admin
 
   def index
@@ -8,7 +7,7 @@ class Admin::CandidatesController < ApplicationController
   end
 
   def show
-    @profile = CandidateProfile.find(params[:id])
+    @profile = CandidateProfile.includes(:educations, :work_experiences, :skills, candidate_languages: :language, candidate_documents: :file_attachment).find(params[:id])
     @document = @profile.candidate_documents.last
   end
 
