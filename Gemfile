@@ -14,7 +14,7 @@ gem "thruster", require: false
 
 gem "devise"
 gem "tailwindcss-rails", "~> 4.6"
-gem "pdf-reader", "~> 2.12"
+gem "pdf-reader", "~> 2.16"
 gem "docx", "~> 0.9"
 gem "pagy", "~> 9.0"
 
